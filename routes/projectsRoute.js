@@ -1,166 +1,39 @@
-const router = require("express").Router();
-const Project = require("../models/projectModel");
+const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
-const User = require("../models/userModel");
+const router = express.Router();
+const {
+  createProject,
+  getAllProjects,
+  getProjectById,
+  getProjectsByRole,
+  editProject,
+  deleteProject,
+  addMemberToProject,
+  removeMemberFromProject,
+} = require("../controllers/projectsControllers");
 
-// create a project
-router.post("/create-project", authMiddleware, async (req, res) => {
-  try {
-    const newProject = new Project(req.body);
-    await newProject.save();
-    res.send({
-      success: true,
-      data: newProject,
-      message: "Project created successfully",
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Create a project
+router.post("/create-project", authMiddleware, createProject);
 
-// get all projects
-router.post("/get-all-projects", authMiddleware, async (req, res) => {
-  try {
-    const projects = await Project.find({
-      owner: req.body.userId,
-    }).sort({ createdAt: -1 });
-    res.send({
-      success: true,
-      data: projects,
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Get all projects
+router.get("/all-projects", authMiddleware, getAllProjects);
 
-// get project by id
-router.post("/get-project-by-id", authMiddleware, async (req, res) => {
-  try {
-    const project = await Project.findById(req.body._id)
-      .populate("owner")
-      .populate("members.user");
-    res.send({
-      success: true,
-      data: project,
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Get project by id
+router.get("/project/:id", authMiddleware, getProjectById);
 
-// get projects by role
-router.post("/get-projects-by-role", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    const projects = await Project.find({ "members.user": userId })
-      .sort({
-        createdAt: -1,
-      })
-      .populate("owner");
-    res.send({
-      success: true,
-      data: projects,
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Get projects by role
+router.get("/projects-by-role", authMiddleware, getProjectsByRole);
 
-// edit a project
-router.post("/edit-project", authMiddleware, async (req, res) => {
-  try {
-    await Project.findByIdAndUpdate(req.body._id, req.body);
-    res.send({
-      success: true,
-      message: "Project updated successfully",
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Edit a project
+router.put("/edit-project/:id", authMiddleware, editProject);
 
-// delete a project
-router.post("/delete-project", authMiddleware, async (req, res) => {
-  try {
-    await Project.findByIdAndDelete(req.body._id);
-    res.send({
-      success: true,
-      message: "Project deleted successfully",
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Delete a project
+router.delete("/delete-project/:id", authMiddleware, deleteProject);
 
-// add a member to a project
-router.post("/add-member", authMiddleware, async (req, res) => {
-  try {
-    const { email, role, projectId } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.send({
-        success: false,
-        message: "User not found",
-      });
-    }
-    await Project.findByIdAndUpdate(projectId, {
-      $push: {
-        members: {
-          user: user._id,
-          role,
-        },
-      },
-    });
+// Add a member to a project
+router.post("/add-member", authMiddleware, addMemberToProject);
 
-    res.send({
-      success: true,
-      message: "Member added successfully",
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
-
-// remove a member from a project
-router.post("/remove-member", authMiddleware, async (req, res) => {
-  try {
-    const { memberId, projectId } = req.body;
-
-    const project = await Project.findById(projectId);
-    project.members.pull(memberId);
-    await project.save();
-
-    res.send({
-      success: true,
-      message: "Member removed successfully",
-    });
-  } catch (error) {
-    res.send({
-      error: error.message,
-      success: false,
-    });
-  }
-});
+// Remove a member from a project
+router.delete("/remove-member", authMiddleware, removeMemberFromProject);
 
 module.exports = router;
