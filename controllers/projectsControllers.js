@@ -22,19 +22,9 @@ const createProject = async (req, res) => {
 // Controller for getting all projects
 const getAllProjects = async (req, res) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-
-    const options = {
-      page,
-      limit,
-      sort: { createdAt: -1 },
-    };
-
-    const projects = await Project.paginate(
-      { owner: req.body.userId },
-      options
-    );
+    const projects = await Project.find({
+      owner: req.body.userId,
+    }).sort({ createdAt: -1 });
     res.send({
       success: true,
       data: projects,
@@ -69,19 +59,11 @@ const getProjectById = async (req, res) => {
 const getProjectsByRole = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-
-    const options = {
-      page,
-      limit,
-      sort: { createdAt: -1 },
-    };
-
-    const projects = await Project.paginate(
-      { "members.user": userId },
-      options
-    );
+    const projects = await Project.find({ "members.user": userId })
+      .sort({
+        createdAt: -1,
+      })
+      .populate("owner");
     res.send({
       success: true,
       data: projects,
