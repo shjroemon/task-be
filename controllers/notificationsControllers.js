@@ -1,16 +1,7 @@
 const Notification = require("../models/notificationsModel");
-const { validateNotification } = require("../utils/validationNotification");
 
 const addNotification = async (req, res) => {
   try {
-    const { error } = validateNotification(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        error: error.details[0].message,
-      });
-    }
-
     const newNotification = new Notification(req.body);
     await newNotification.save();
     res.send({
@@ -43,16 +34,11 @@ const getAllNotifications = async (req, res) => {
   }
 };
 
-const markNotificationsAsRead = async (req, res) => {
+const markAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      {
-        user: req.body.userId,
-        read: false,
-      },
-      {
-        read: true,
-      }
+      { user: req.body.userId, read: false },
+      { read: true }
     );
     const notifications = await Notification.find({
       user: req.body.userId,
@@ -70,11 +56,9 @@ const markNotificationsAsRead = async (req, res) => {
   }
 };
 
-const removeAllNotifications = async (req, res) => {
+const deleteAllNotifications = async (req, res) => {
   try {
-    await Notification.deleteMany({
-      user: req.body.userId,
-    });
+    await Notification.deleteMany({ user: req.body.userId });
     res.send({
       success: true,
       message: "All notifications deleted",
@@ -90,6 +74,6 @@ const removeAllNotifications = async (req, res) => {
 module.exports = {
   addNotification,
   getAllNotifications,
-  markNotificationsAsRead,
-  removeAllNotifications,
+  markAsRead,
+  deleteAllNotifications,
 };

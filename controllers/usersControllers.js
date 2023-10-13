@@ -1,15 +1,15 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { validateRegistration, validateLogin } = require("../utils/validation");
+const { registerValidation, loginValidation } = require("../utils/validation");
 
 const registerUser = async (req, res) => {
   try {
-    const { error } = validateRegistration(req.body);
+    const { error } = registerValidation(req.body);
     if (error) {
       return res.status(400).send({
         success: false,
-        error: error.details[0].message,
+        message: error.details[0].message,
       });
     }
 
@@ -29,7 +29,7 @@ const registerUser = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (error) {
-    res.send({
+    res.status(400).send({
       success: false,
       message: error.message,
     });
@@ -38,11 +38,11 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { error } = validateLogin(req.body);
+    const { error } = loginValidation(req.body);
     if (error) {
       return res.status(400).send({
         success: false,
-        error: error.details[0].message,
+        message: error.details[0].message,
       });
     }
 
@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
 
     res.send({
       success: true,
-      data: { user, token },
+      data: token,
       message: "User logged in successfully",
     });
   } catch (error) {
@@ -78,8 +78,7 @@ const loginUser = async (req, res) => {
 
 const getLoggedInUser = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.body.userId });
-    user.password = undefined;
+    const user = await User.findById(req.body.userId).select("-password");
 
     res.send({
       success: true,

@@ -1,20 +1,9 @@
 const Project = require("../models/projectModel");
 const User = require("../models/userModel");
-const {
-  validateCreateProject,
-  validateEditProject,
-} = require("../utils/validationProjectRoute");
 
+// Controller for creating a project
 const createProject = async (req, res) => {
   try {
-    const { error } = validateCreateProject(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        error: error.details[0].message,
-      });
-    }
-
     const newProject = new Project(req.body);
     await newProject.save();
     res.send({
@@ -30,23 +19,25 @@ const createProject = async (req, res) => {
   }
 };
 
+// Controller for getting all projects
 const getAllProjects = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
 
-    const skip = (page - 1) * pageSize;
+    const options = {
+      page,
+      limit,
+      sort: { createdAt: -1 },
+    };
 
-    const projects = await Project.find({ owner: req.body.userId })
-      .skip(skip)
-      .limit(pageSize)
-      .sort({ createdAt: -1 });
-
+    const projects = await Project.paginate(
+      { owner: req.body.userId },
+      options
+    );
     res.send({
       success: true,
       data: projects,
-      currentPage: page,
-      pageSize: pageSize,
     });
   } catch (error) {
     res.send({
@@ -56,6 +47,7 @@ const getAllProjects = async (req, res) => {
   }
 };
 
+// Controller for getting a project by ID
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.body._id)
@@ -73,25 +65,26 @@ const getProjectById = async (req, res) => {
   }
 };
 
+// Controller for getting projects by role
 const getProjectsByRole = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
 
-    const skip = (page - 1) * pageSize;
+    const options = {
+      page,
+      limit,
+      sort: { createdAt: -1 },
+    };
 
-    const projects = await Project.find({ "members.user": userId })
-      .skip(skip)
-      .limit(pageSize)
-      .sort({ createdAt: -1 })
-      .populate("owner");
-
+    const projects = await Project.paginate(
+      { "members.user": userId },
+      options
+    );
     res.send({
       success: true,
       data: projects,
-      currentPage: page,
-      pageSize: pageSize,
     });
   } catch (error) {
     res.send({
@@ -101,16 +94,9 @@ const getProjectsByRole = async (req, res) => {
   }
 };
 
+// Controller for editing a project
 const editProject = async (req, res) => {
   try {
-    const { error } = validateEditProject(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        error: error.details[0].message,
-      });
-    }
-
     await Project.findByIdAndUpdate(req.body._id, req.body);
     res.send({
       success: true,
@@ -124,6 +110,7 @@ const editProject = async (req, res) => {
   }
 };
 
+// Controller for deleting a project
 const deleteProject = async (req, res) => {
   try {
     await Project.findByIdAndDelete(req.body._id);
@@ -139,6 +126,7 @@ const deleteProject = async (req, res) => {
   }
 };
 
+// Controller for adding a member to a project
 const addMemberToProject = async (req, res) => {
   try {
     const { email, role, projectId } = req.body;
@@ -170,6 +158,7 @@ const addMemberToProject = async (req, res) => {
   }
 };
 
+// Controller for removing a member from a project
 const removeMemberFromProject = async (req, res) => {
   try {
     const { memberId, projectId } = req.body;

@@ -1,45 +1,24 @@
 const Joi = require("joi");
 
-const validation = {};
+const registerValidation = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+  });
+  return schema.validate(data);
+};
 
-validation.validateRegistration = (data) => {
+const loginValidation = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
   });
-
   return schema.validate(data);
 };
 
-validation.validateLogin = (data) => {
-  const schema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-  });
-
-  return schema.validate(data);
+module.exports = {
+  registerValidation,
+  loginValidation,
 };
-validation.validateCreateTask = (data) => {
-  const schema = Joi.object({
-    // Define validation rules for creating a task
-    // For example:
-    title: Joi.string().required(),
-    description: Joi.string().required(),
-    assignedTo: Joi.string().required(),
-    // ...
-  });
-
-  return schema.validate(data);
-};
-
-validation.validateUpdateTask = (data) => {
-  const schema = Joi.object({
-    // Define validation rules for updating a task
-    // For example:
-    _id: Joi.string().required(),
-    // ...
-  });
-
-  return schema.validate(data);
-};
-module.exports = validation;

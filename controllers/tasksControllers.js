@@ -1,80 +1,59 @@
 const Task = require("../models/taskModel");
 const cloudinary = require("../config/cloudinaryConfig");
-const {
-  validateCreateTask,
-  validateUpdateTask,
-} = require("../utils/validation");
 
 const createTask = async (req, res) => {
   try {
-    const { error } = validateCreateTask(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        error: error.details[0].message,
-      });
-    }
-
     const newTask = new Task(req.body);
     await newTask.save();
-    res.send({
+    res.status(201).json({
       success: true,
       message: "Task created successfully",
       data: newTask,
     });
   } catch (error) {
-    res.send({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to create task",
+      error: error.message,
     });
   }
 };
 
 const getAllTasks = async (req, res) => {
   try {
-    Object.keys(req.body).forEach((key) => {
-      if (req.body[key] === "all") {
-        delete req.body[key];
-      }
-    });
-    delete req.body["userId"];
+    // Remove unnecessary keys from the request body if needed
+    removeKeys(req.body);
     const tasks = await Task.find(req.body)
       .populate("assignedTo")
       .populate("assignedBy")
       .populate("project")
       .sort({ createdAt: -1 });
-    res.send({
+    res.json({
       success: true,
       message: "Tasks fetched successfully",
       data: tasks,
     });
   } catch (error) {
-    res.send({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to fetch tasks",
+      error: error.message,
     });
   }
 };
 
 const updateTask = async (req, res) => {
   try {
-    const { error } = validateUpdateTask(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        error: error.details[0].message,
-      });
-    }
-
     await Task.findByIdAndUpdate(req.body._id, req.body);
-    res.send({
+    res.json({
       success: true,
       message: "Task updated successfully",
     });
   } catch (error) {
-    res.send({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to update task",
+      error: error.message,
     });
   }
 };
@@ -82,12 +61,41 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   try {
     await Task.findByIdAndDelete(req.body._id);
-    res.send({
+    res.json({
       success: true,
       message: "Task deleted successfully",
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete task",
+      error: error.message,
+    });
+  }
+};
+
+const softDeleteTask = async (req, res) => {
+  try {
+    const taskId = req.body._id;
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+      return res.status(404).send({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    // Update isDeleted flag
+    task.isDeleted = true;
+    await task.save();
+
     res.send({
+      success: true,
+      message: "Task soft deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
       success: false,
       message: error.message,
     });
@@ -110,15 +118,16 @@ const uploadImage = async (req, res) => {
       }
     );
 
-    res.send({
+    res.json({
       success: true,
       message: "Image uploaded successfully",
       data: imageURL,
     });
   } catch (error) {
-    res.send({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to upload image",
+      error: error.message,
     });
   }
 };
@@ -129,4 +138,5 @@ module.exports = {
   updateTask,
   deleteTask,
   uploadImage,
+  softDeleteTask,
 };

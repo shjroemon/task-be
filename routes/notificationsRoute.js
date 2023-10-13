@@ -1,6 +1,7 @@
-const router = require("express").Router();
-const authMiddleware = require("../middlewares/authMiddleware");
+const express = require("express");
+const router = express.Router();
 const notificationController = require("../controllers/notificationsControllers");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 router.post(
   "/add-notification",
@@ -12,15 +13,11 @@ router.get(
   authMiddleware,
   notificationController.getAllNotifications
 );
-router.post(
-  "/mark-as-read",
-  authMiddleware,
-  notificationController.markNotificationsAsRead
-);
+router.post("/mark-as-read", authMiddleware, notificationController.markAsRead);
 router.delete(
   "/remove-all-notifications",
   authMiddleware,
-  notificationController.removeAllNotifications
+  notificationController.deleteAllNotifications
 );
 
 module.exports = router;
