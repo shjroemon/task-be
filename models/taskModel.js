@@ -29,11 +29,14 @@ const taskSchema = new mongoose.Schema(
     },
     attachments: {
       type: Array,
-      default : []
+      default: [],
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
 );
-
 
 module.exports = mongoose.model("tasks", taskSchema);

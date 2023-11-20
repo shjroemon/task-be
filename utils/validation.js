@@ -1,24 +1,37 @@
-const Joi = require("joi");
+// utils/validation.js
 
-const registerValidation = (data) => {
-  const schema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-  });
-  return schema.validate(data);
+const { body, validationResult } = require("express-validator");
+
+const validateRegistration = () => {
+  return [
+    body("email").isEmail().withMessage("Invalid email"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long"),
+    // Add more validation rules as needed
+  ];
 };
 
-const loginValidation = (data) => {
-  const schema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-  });
-  return schema.validate(data);
+const validateLogin = () => {
+  return [
+    body("email").isEmail().withMessage("Invalid email"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ];
+};
+
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array(),
+    });
+  }
+  next();
 };
 
 module.exports = {
-  registerValidation,
-  loginValidation,
+  validateRegistration,
+  validateLogin,
+  validate,
 };

@@ -1,24 +1,43 @@
-const express = require("express");
-const router = express.Router();
+const router = require("express").Router();
+const projectsController = require("../controllers/projectsControllers");
 const authMiddleware = require("../middlewares/authMiddleware");
-const {
-  createProject,
-  getAllProjects,
-  getProjectById,
-  getProjectsByRole,
-  editProject,
-  deleteProject,
-  addMemberToProject,
-  removeMemberFromProject,
-} = require("../controllers/projectsControllers");
 
-router.post("/create-project", authMiddleware, createProject);
-router.post("/all-projects", authMiddleware, getAllProjects);
-router.post("/project-by-id", authMiddleware, getProjectById);
-router.post("/projects-by-role", authMiddleware, getProjectsByRole);
-router.post("/edit-project", authMiddleware, editProject);
-router.post("/delete-project", authMiddleware, deleteProject);
-router.post("/add-member", authMiddleware, addMemberToProject);
-router.post("/remove-member", authMiddleware, removeMemberFromProject);
+router.post(
+  "/create-project",
+  authMiddleware,
+  projectsController.createProject
+);
+router.get(
+  "/get-all-projects",
+  authMiddleware,
+  projectsController.getAllProjects
+);
+router.get(
+  "/get-project-by-id",
+  authMiddleware,
+  projectsController.getProjectById
+);
+router.get("/project/:id", authMiddleware, projectsController.getProjectById);
+router.get(
+  "/get-projects-by-role",
+  authMiddleware,
+  projectsController.getProjectsByRole
+);
+router.put("/edit-project", authMiddleware, projectsController.editProject);
+router.delete(
+  "/delete-project",
+  authMiddleware,
+  projectsController.deleteProject
+);
+router.post(
+  "/add-member",
+  authMiddleware,
+  projectsController.addMemberToProject
+);
+router.post(
+  "/remove-member",
+  authMiddleware,
+  projectsController.removeMemberFromProject
+);
 
 module.exports = router;

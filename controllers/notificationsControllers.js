@@ -37,8 +37,13 @@ const getAllNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { user: req.body.userId, read: false },
-      { read: true }
+      {
+        user: req.body.userId,
+        read: false,
+      },
+      {
+        read: true,
+      }
     );
     const notifications = await Notification.find({
       user: req.body.userId,
@@ -58,7 +63,9 @@ const markAsRead = async (req, res) => {
 
 const deleteAllNotifications = async (req, res) => {
   try {
-    await Notification.deleteMany({ user: req.body.userId });
+    await Notification.deleteMany({
+      user: req.body.userId,
+    });
     res.send({
       success: true,
       message: "All notifications deleted",

@@ -1,17 +1,20 @@
+// controllers/userController.js
+
+const { validationResult } = require("express-validator");
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { registerValidation, loginValidation } = require("../utils/validation");
+const {
+  validateRegistration,
+  validateLogin,
+  validate,
+} = require("../utils/validation");
 
 const registerUser = async (req, res) => {
   try {
-    const { error } = registerValidation(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        message: error.details[0].message,
-      });
-    }
+    const validationRules = validateRegistration();
+
+    await validate(req, res, validationRules);
 
     const userExists = await User.findOne({ email: req.body.email });
     if (userExists) {
@@ -29,7 +32,7 @@ const registerUser = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (error) {
-    res.status(400).send({
+    res.send({
       success: false,
       message: error.message,
     });
@@ -38,13 +41,9 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { error } = loginValidation(req.body);
-    if (error) {
-      return res.status(400).send({
-        success: false,
-        message: error.details[0].message,
-      });
-    }
+    const validationRules = validateLogin();
+
+    await validate(req, res, validationRules);
 
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
@@ -78,15 +77,21 @@ const loginUser = async (req, res) => {
 
 const getLoggedInUser = async (req, res) => {
   try {
-    const user = await User.findById(req.body.userId).select("-password");
+    // No need for validation here as it's a protected route
 
-    res.send({
+    const user = await User.findOne({ _id: req.body.userId });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.password = undefined;
+    res.json({
       success: true,
       data: user,
       message: "User fetched successfully",
     });
   } catch (error) {
-    res.send({
+    res.status(500).json({
       success: false,
       message: error.message,
     });

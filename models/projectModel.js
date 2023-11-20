@@ -3,12 +3,11 @@ const mongoose = require("mongoose");
 const memberSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Use the correct model name here
+    ref: "users",
     required: true,
   },
   role: {
     type: String,
-    enum: ["admin", "employee", "owner"],
     required: true,
   },
 });
@@ -33,13 +32,11 @@ const projectSchema = new mongoose.Schema(
       ref: "users",
       required: true,
     },
-    members: {
-      type: [memberSchema],
-      deleted: {
-        type: Boolean,
-        default: false,
-      },
+    deleted: {
+      type: Boolean,
+      default: false,
     },
+    members: [memberSchema],
   },
   {
     timestamps: true,

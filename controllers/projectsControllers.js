@@ -1,7 +1,6 @@
 const Project = require("../models/projectModel");
 const User = require("../models/userModel");
 
-// Controller for creating a project
 const createProject = async (req, res) => {
   try {
     const newProject = new Project(req.body);
@@ -19,15 +18,25 @@ const createProject = async (req, res) => {
   }
 };
 
-// Controller for getting all projects
 const getAllProjects = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const projects = await Project.find({
       owner: req.body.userId,
-    }).sort({ createdAt: -1 });
+      deleted: { $ne: true }, // Exclude soft deleted projects
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
     res.send({
       success: true,
       data: projects,
+      currentPage: page,
+      totalPages: Math.ceil(projects.length / limit),
     });
   } catch (error) {
     res.send({
@@ -37,12 +46,17 @@ const getAllProjects = async (req, res) => {
   }
 };
 
-// Controller for getting a project by ID
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.body._id)
       .populate("owner")
       .populate("members.user");
+    if (!project || project.deleted) {
+      return res.send({
+        success: false,
+        message: "Project not found",
+      });
+    }
     res.send({
       success: true,
       data: project,
@@ -55,14 +69,14 @@ const getProjectById = async (req, res) => {
   }
 };
 
-// Controller for getting projects by role
 const getProjectsByRole = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const projects = await Project.find({ "members.user": userId })
-      .sort({
-        createdAt: -1,
-      })
+    const projects = await Project.find({
+      "members.user": userId,
+      deleted: { $ne: true },
+    })
+      .sort({ createdAt: -1 })
       .populate("owner");
     res.send({
       success: true,
@@ -76,12 +90,16 @@ const getProjectsByRole = async (req, res) => {
   }
 };
 
-// Controller for editing a project
 const editProject = async (req, res) => {
   try {
-    await Project.findByIdAndUpdate(req.body._id, req.body);
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.body._id,
+      req.body,
+      { new: true }
+    );
     res.send({
       success: true,
+      data: updatedProject,
       message: "Project updated successfully",
     });
   } catch (error) {
@@ -92,13 +110,18 @@ const editProject = async (req, res) => {
   }
 };
 
-// Controller for deleting a project
 const deleteProject = async (req, res) => {
   try {
-    await Project.findByIdAndDelete(req.body._id);
+    // Soft delete: set deleted field instead of actually deleting
+    const deletedProject = await Project.findByIdAndUpdate(
+      req.body._id,
+      { deleted: true },
+      { new: true }
+    );
     res.send({
       success: true,
-      message: "Project deleted successfully",
+      data: deletedProject,
+      message: "Project marked as deleted",
     });
   } catch (error) {
     res.send({
@@ -108,7 +131,6 @@ const deleteProject = async (req, res) => {
   }
 };
 
-// Controller for adding a member to a project
 const addMemberToProject = async (req, res) => {
   try {
     const { email, role, projectId } = req.body;
@@ -140,7 +162,6 @@ const addMemberToProject = async (req, res) => {
   }
 };
 
-// Controller for removing a member from a project
 const removeMemberFromProject = async (req, res) => {
   try {
     const { memberId, projectId } = req.body;
