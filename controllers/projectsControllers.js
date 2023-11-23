@@ -1,8 +1,17 @@
+const { validationResult } = require("express-validator");
 const Project = require("../models/projectModel");
 const User = require("../models/userModel");
 
 const createProject = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     const newProject = new Project(req.body);
     await newProject.save();
     res.send({
@@ -20,13 +29,21 @@ const createProject = async (req, res) => {
 
 const getAllProjects = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const projects = await Project.find({
       owner: req.body.userId,
-      deleted: { $ne: true }, // Exclude soft deleted projects
+      deleted: { $ne: true },
     })
       .sort({ createdAt: -1 })
       .skip(skip)

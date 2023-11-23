@@ -4,13 +4,16 @@ const authMiddleware = require("../middlewares/authMiddleware");
 
 router.post(
   "/create-project",
-  authMiddleware,
-  projectsController.createProject
+  [body("name").notEmpty().withMessage("Project name is required")],
+  projectController.createProject
 );
 router.get(
   "/get-all-projects",
-  authMiddleware,
-  projectsController.getAllProjects
+  [
+    query("page").optional().isInt().withMessage("Page must be an integer"),
+    query("limit").optional().isInt().withMessage("Limit must be an integer"),
+  ],
+  projectController.getAllProjects
 );
 router.get(
   "/get-project-by-id",

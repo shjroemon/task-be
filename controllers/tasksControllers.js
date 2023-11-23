@@ -1,8 +1,17 @@
+const { validationResult } = require("express-validator");
 const Task = require("../models/taskModel");
 const cloudinary = require("../config/cloudinaryConfig");
 
 const createTask = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     const newTask = new Task(req.body);
     await newTask.save();
     res.send({
@@ -20,6 +29,14 @@ const createTask = async (req, res) => {
 
 const getAllTasks = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     Object.keys(req.body).forEach((key) => {
       if (req.body[key] === "all") {
         delete req.body[key];
@@ -29,7 +46,7 @@ const getAllTasks = async (req, res) => {
 
     const tasks = await Task.find({
       ...req.body,
-      deleted: { $ne: true }, // Exclude soft deleted tasks
+      deleted: { $ne: true },
     })
       .populate("assignedTo")
       .populate("assignedBy")
@@ -51,6 +68,14 @@ const getAllTasks = async (req, res) => {
 
 const updateTask = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     const updatedTask = await Task.findByIdAndUpdate(req.body._id, req.body, {
       new: true,
     });
@@ -69,6 +94,14 @@ const updateTask = async (req, res) => {
 
 const deleteTask = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     // Soft delete: set deleted field instead of actually deleting
     const deletedTask = await Task.findByIdAndUpdate(
       req.body._id,
@@ -90,6 +123,14 @@ const deleteTask = async (req, res) => {
 
 const uploadImage = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array(),
+      });
+    }
+
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "tasks",
     });
